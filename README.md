@@ -11,4 +11,3 @@ Platform using AWS and Azure respectively built using Terraform
 
 - Python for validation scripts
 
-TEST CONFIG
