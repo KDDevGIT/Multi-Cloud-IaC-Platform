@@ -17,3 +17,12 @@ variable "db_password" {
   type = string
   sensitive = true
 }
+
+//Added from Azure > Network > Outputs.tf and Main.tf 
+variable "public_subnet_prefixes" {
+  type = list(string)
+}
+
+variable "private_subnet_prefixes" {
+  type = list(string)
+}
