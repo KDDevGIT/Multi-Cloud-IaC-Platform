@@ -25,5 +25,3 @@ module "database" {
     db_password = var.db_password
 }
 
-//TESTING COMMIT CONFIG
-//TESTING COMMIT CONFIG
