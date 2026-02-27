@@ -10,3 +10,5 @@ Platform using AWS and Azure respectively built using Terraform
 - GitHub Actions CI/CD 
 
 - Python for validation scripts
+
+TEST CONFIG
