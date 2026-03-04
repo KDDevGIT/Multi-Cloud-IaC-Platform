@@ -1,0 +1,85 @@
+name: PR Terraform Plan
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        envdir: [environments/aws-prod, environments/azure-prod]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        working-directory: ${{ matrix.envdir }}
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        working-directory: ${{ matrix.envdir }}
+        run: terraform validate
+
+      # --- Security scanning (pick one first; add the other later) ---
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          soft_fail: true
+
+      # --- Plan ---
+      - name: Terraform plan
+        id: plan
+        working-directory: ${{ matrix.envdir }}
+        env:
+          TF_IN_AUTOMATION: "true"
+          # Cloud creds come from GitHub secrets (see notes below)
+        run: |
+          terraform plan -no-color -out=tfplan
+          terraform show -no-color tfplan > plan.txt
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: plan-${{ matrix.envdir }}
+          path: |
+            ${{ matrix.envdir }}/plan.txt
+
+      # --- Optional: validate plan output with Python ---
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate plan policies
+        run: python scripts/validate_plan.py "${{ matrix.envdir }}/plan.txt"
+
+      # --- Cost estimation (Infracost example) ---
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Infracost breakdown
+        working-directory: ${{ matrix.envdir }}
+        run: |
+          infracost breakdown --path . --format json --out-file infracost.json
+
+      - name: Upload cost artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cost-${{ matrix.envdir }}
+          path: |
+            ${{ matrix.envdir }}/infracost.json
