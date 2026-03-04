@@ -1,0 +1,35 @@
+name: Terraform Apply
+
+on:
+  workflow_dispatch:
+    inputs:
+      envdir:
+        description: "Environment directory to apply"
+        required: true
+        type: choice
+        options:
+          - environments/aws-prod
+          - environments/azure-prod
+
+permissions:
+  contents: read
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.7.5
+
+      - name: Terraform init
+        working-directory: ${{ inputs.envdir }}
+        run: terraform init -input=false
+
+      - name: Terraform apply
+        working-directory: ${{ inputs.envdir }}
+        run: terraform apply -auto-approve
