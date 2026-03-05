@@ -12,7 +12,8 @@ module "network" {
   private_subnet_prefixes = var.private_subnet_prefixes
 }
 
-module "compute" {
+//Comment out until Milestone 2 implementation
+/*module "compute" {
   source   = "../../modules/azure/compute"
   name     = var.name
   location = var.location
@@ -27,4 +28,4 @@ module "database" {
   location          = var.location
   db_admin_username = var.db_username
   db_admin_password = var.db_password
-}
+}*/
