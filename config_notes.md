@@ -6,4 +6,3 @@
 - az login
 - az account show 
 
-TEST
