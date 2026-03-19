@@ -1,18 +1,23 @@
 ### Istall CLI for AWS and Azure
-- install AWS CLI: winget install -e --id Amazon.AWSCLI
-- aws configure
-- aws sts get-caller-identity
-
-- install Azure CLI: winget install -e --id Microsoft.AzureCLI
-- az login
-- az account show 
-
-### If you have issues with Azure
-- az account clear
-- az config set core.enable_broker_on_windows=false
-- az login
-- az account show
-
+#### Install AWS CLI
+```
+winget install -e --id Amazon.AWSCLI
+aws configure
+aws sts get-caller-identity
+```
+#### Install Azure CLI
+```
+winget install -e --id Microsoft.AzureCLI
+az login
+az account show 
+```
+#### If you have issues with Azure CLI Install
+```
+az account clear
+az config set core.enable_broker_on_windows=false
+az login
+az account show
+```
 ### Create AWS S3 Bucket (backend.tf)
 #### Create Bucket
 ```
