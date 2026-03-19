@@ -5,3 +5,5 @@
 - install Azure CLI: winget install -e --id Microsoft.AzureCLI
 - az login
 - az account show 
+
+TEST
