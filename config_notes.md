@@ -17,20 +17,20 @@
 #### Create Bucket
 ```
 aws s3api create-bucket `
-  --bucket YOUR-REAL-TFSTATE-BUCKET-NAME `
+  --bucket TFSTATE-BUCKET-NAME `
   --region us-west-1 `
   --create-bucket-configuration LocationConstraint=us-west-1
 ```
 #### Enable Versioning on Bucket
 ```
 aws s3api put-bucket-versioning `
-  --bucket YOUR-REAL-TFSTATE-BUCKET-NAME `
+  --bucket TFSTATE-BUCKET-NAME `
   --versioning-configuration Status=Enabled
 ```
 #### Enable Encryption on Bucket
 ```
 aws s3api put-bucket-encryption `
-  --bucket YOUR-REAL-TFSTATE-BUCKET-NAME `
+  --bucket TFSTATE-BUCKET-NAME `
   --server-side-encryption-configuration '{
     "Rules": [
       {
@@ -44,7 +44,7 @@ aws s3api put-bucket-encryption `
   ### Create AWS DynamoDB Lock Table (backend.tf)
 ```
   aws dynamodb create-table `
-  --table-name YOUR-REAL-TF-LOCKS-TABLE `
+  --table-name TF-LOCKS-TABLE-NAME `
   --attribute-definitions AttributeName=LockID,AttributeType=S `
   --key-schema AttributeName=LockID,KeyType=HASH `
   --billing-mode PAY_PER_REQUEST `
