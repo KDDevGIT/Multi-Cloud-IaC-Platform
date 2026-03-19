@@ -1,4 +1,4 @@
-### Istall CLI for AWS and Azure
+### Install CLI for AWS and Azure
 #### Install AWS CLI
 ```
 winget install -e --id Amazon.AWSCLI
