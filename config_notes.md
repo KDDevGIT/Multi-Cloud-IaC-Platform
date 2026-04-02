@@ -18,6 +18,7 @@ az config set core.enable_broker_on_windows=false
 az login
 az account show
 ```
+## AWS
 ### Create AWS S3 Bucket (backend.tf)
 #### Create Bucket
 ```
@@ -55,4 +56,25 @@ aws s3api put-bucket-encryption `
   --billing-mode PAY_PER_REQUEST `
   --region us-west-1
 
+```
+## Azure
+### Create Resource Group (backend.tf)
+```
+az group create --name YOUR-REAL-TFSTATE-RG --location westus
+```
+### Create Storage Account (backend.tf)
+```
+az storage account create `
+  --name yourrealtfstatestorage `
+  --resource-group YOUR-REAL-TFSTATE-RG `
+  --location westus2 `
+  --sku Standard_LRS `
+  --encryption-services blob
+```
+### Create Container (backend.tf)
+```
+az storage container create `
+  --name tfstate `
+  --account-name yourrealtfstatestorage `
+  --auth-mode login
 ```
