@@ -67,7 +67,7 @@ az group create --name YOUR-REAL-TFSTATE-RG --location westus
 az storage account create `
   --name yourrealtfstatestorage `
   --resource-group YOUR-REAL-TFSTATE-RG `
-  --location westus2 `
+  --location westus `
   --sku Standard_LRS `
   --encryption-services blob
 ```
