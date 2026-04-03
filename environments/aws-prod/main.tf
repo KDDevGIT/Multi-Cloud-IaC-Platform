@@ -8,15 +8,16 @@ module "network" {
     cidr_block = var.vpc_cidr
 }
 
-//Comment out until Milestone 2 implementation
-/*module "compute" {
+
+module "compute" {
   source = "../../modules/aws/compute"
   name = var.name
   vpc_id = module.network.vpc_id
   public_subnets = module.network.public_subnet_ids
-  private_subnets = module.network.private_subnet_ids
+  ami_id = var.ami_id
 }
 
+/*
 module "database" {
     source = "../../modules/aws/database"
     name = var.name
