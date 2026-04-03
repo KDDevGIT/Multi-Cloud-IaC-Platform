@@ -78,3 +78,14 @@ az storage container create `
   --account-name yourrealtfstatestorage `
   --auth-mode login
 ```
+## AWS Compute
+### Grab AMI (environments/aws-prod/terraform.tfvars)
+```
+aws ssm get-parameters `
+  --names /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64 `
+  --region us-west-1
+```
+OR In AWS Console: 
+1. Launch EC2 Instance
+2. Select Amazon Linux 2023 or Amazon Linux 2
+3.  Copy AMI ID
