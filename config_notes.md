@@ -89,3 +89,4 @@ OR In AWS Console:
 1. Launch EC2 Instance
 2. Select Amazon Linux 2023 or Amazon Linux 2
 3.  Copy AMI ID
+
