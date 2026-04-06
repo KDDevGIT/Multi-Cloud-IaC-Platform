@@ -17,13 +17,12 @@ module "compute" {
   ami_id = var.ami_id
 }
 
-/*
-module "database" {
-    source = "../../modules/aws/database"
-    name = var.name
-    vpc_id = module.network.vpc_id
-    private_subnets = module.network.private_subnet_ids
-    db_username = var.db_username
-    db_password = var.db_password
-}*/
 
+module "database" {
+  source          = "../../modules/aws/database"
+  name            = var.name
+  vpc_id          = module.network.vpc_id
+  private_subnets = module.network.private_subnet_ids
+  db_username     = var.db_username
+  db_password     = var.db_password
+}

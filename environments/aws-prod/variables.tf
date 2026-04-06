@@ -15,11 +15,11 @@ variable "ami_id" {
   description = "AMI ID for the EC2 instance."
 }
 
-/*variable "db_username" {
+variable "db_username" {
   type = string
 }
 
 variable "db_password" {
   type = string
   sensitive = true
-}*/
+}
