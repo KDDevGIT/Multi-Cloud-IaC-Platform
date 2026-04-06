@@ -1,3 +1,8 @@
+output "resource_group_name" {
+  description = "Resource group name for Azure network resources."
+  value       = azurerm_resource_group.this.name
+}
+
 output "vnet_id" {
   value = azurerm_virtual_network.this.id
 }

@@ -13,15 +13,17 @@ module "network" {
 }
 
 //Comment out until Milestone 2 implementation
-/*module "compute" {
-  source   = "../../modules/azure/compute"
-  name     = var.name
-  location = var.location
-
-  # minimal “just enough for connection”
-  subnet_id = module.network.public_subnet_ids[0]
+module "compute" {
+  source              = "../../modules/azure/compute"
+  name                = var.name
+  location            = var.location
+  resource_group_name = module.network.resource_group_name
+  subnet_id           = module.network.public_subnet_ids[0]
+  admin_username      = var.admin_username
+  ssh_public_key      = var.ssh_public_key
 }
 
+/*
 module "database" {
   source            = "../../modules/azure/database"
   name              = var.name
