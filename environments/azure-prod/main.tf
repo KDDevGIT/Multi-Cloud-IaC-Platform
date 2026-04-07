@@ -23,11 +23,12 @@ module "compute" {
   ssh_public_key      = var.ssh_public_key
 }
 
-/*
+
 module "database" {
-  source            = "../../modules/azure/database"
-  name              = var.name
-  location          = var.location
-  db_admin_username = var.db_username
-  db_admin_password = var.db_password
-}*/
+  source              = "../../modules/azure/database"
+  name                = var.name
+  location            = var.location
+  resource_group_name = module.network.resource_group_name
+  db_admin_username   = var.db_admin_username
+  db_admin_password   = var.db_admin_password
+}

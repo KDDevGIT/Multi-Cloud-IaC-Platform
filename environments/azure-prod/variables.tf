@@ -36,3 +36,14 @@ variable "ssh_public_key" {
   type        = string
   description = "SSH public key for Azure Linux VM."
 }
+
+variable "db_admin_username" {
+  type        = string
+  description = "Administrator username for Azure SQL Server."
+}
+
+variable "db_admin_password" {
+  type        = string
+  description = "Administrator password for Azure SQL Server."
+  sensitive   = true
+}
