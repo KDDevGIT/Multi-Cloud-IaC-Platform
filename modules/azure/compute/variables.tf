@@ -33,3 +33,10 @@ variable "ssh_public_key" {
   type        = string
   description = "SSH public key for the Linux VM."
 }
+
+variable "instance_count" {
+  type = number
+  description = "Initial number of VM instances in the scale set."
+  default = 2
+}
+
