@@ -32,74 +32,115 @@ resource "azurerm_network_security_group" "this" {
   }
 }
 
-resource "azurerm_public_ip" "this" {
-  name                = "${var.name}-pip"
+//Load Balancer Config 
+resource "azurerm_public_ip" "lb" {
+  name                = "${var.name}-lb-pip"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
 
   tags = {
-    Name = "${var.name}-pip"
+    Name = "${var.name}-lb-pip"
   }
 }
 
-resource "azurerm_network_interface" "this" {
-  name                = "${var.name}-nic"
-  location            = var.location
+resource "azurerm_lb" "this" {
+  name = "${var.name}-lb"
+  location = var.location
   resource_group_name = var.resource_group_name
+  sku = "Standard"
 
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = var.subnet_id
-    private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.this.id
+  frontend_ip_configuration {
+    name = "${var.name}-frontend"
+    public_ip_address_id = azurerm_public_ip.lb.id 
   }
 
   tags = {
-    Name = "${var.name}-nic"
+    Name = "${var.name}-lb"
   }
 }
 
-resource "azurerm_network_interface_security_group_association" "this" {
-  network_interface_id      = azurerm_network_interface.this.id
-  network_security_group_id = azurerm_network_security_group.this.id
+resource "azurerm_lb_backend_address_pool" "this" {
+  loadbalancer_id = azurerm_lb.this.id 
+  name = "${var.name}-backend-pool"
 }
 
-resource "azurerm_linux_virtual_machine" "this" {
-  name                = "${var.name}-vm"
+resource "azurerm_lb_probe" "http" {
+  loadbalancer_id = azurerm_lb.this.id 
+  name = "${var.name}-http-probe"
+  protocol = "Http"
+  port = 80
+  request_path = "/"
+}
+
+resource "azurerm_lb_rule" "http" {
+  loadbalancer_id = azurerm_lb.this.id 
+  name = "${var.name}-http-rule"
+  protocol = "Tcp"
+  frontend_port = 80
+  backend_port = 80
+  frontend_ip_configuration_name = "${var.name}-frontend"
+  backend_address_pool_ids = [azurerm_lb_backend_address_pool.this.id]
+  probe_id = azurerm_lb_probe.http.id 
+}
+
+resource "azurerm_linux_virtual_machine_scale_set" "this" {
+  name = "${var.name}-vmss"
   resource_group_name = var.resource_group_name
-  location            = var.location
-  size                = var.vm_size
-  admin_username      = var.admin_username
-
-  disable_password_authentication = true
-
-  network_interface_ids = [
-    azurerm_network_interface.this.id
-  ]
+  location = var.location
+  sku = var.vm_size
+  instances = var.instance_count
+  admin_username = var.admin_username
+  disable_password_authentication = true 
 
   admin_ssh_key {
-    username   = var.admin_username
+    username = var.admin_username
     public_key = var.ssh_public_key
-  }
-
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-    name                 = "${var.name}-osdisk"
   }
 
   source_image_reference {
     publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts"
-    version   = "latest"
+    offer = "0001-com-ubuntu-server-jammy"
+    sku = "22_04-lts"
+    version = "latest"
   }
 
-  computer_name = "${var.name}vm"
+  os_disk {
+    caching = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  computer_name_prefix = "vmss"
+
+  custom_data = base64encode(<<-EOF
+              #!/bin/bash
+              apt-get update -y
+              apt-get install -y apache2
+              systemctl enable apache2
+              systemctl start apache2
+              echo "<h1>${var.name} app server</h1>" > /var/www/html/index.html
+              echo "<p>Hostname: $(hostname)</p>" >> /var/www/html/index.html
+              EOF
+  )
+
+  network_interface {
+    name = "${var.name}-vmss-nic"
+    primary = true 
+
+    ip_configuration {
+      name = "internal"
+      primary = true 
+      subnet_id = var.subnet_id
+      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.this.id]      
+    }
+    network_security_group_id = azurerm_network_security_group.this.id
+  }
 
   tags = {
-    Name = "${var.name}-vm"
-  }
+    Name = "${var.name}-vmss"
+  } 
 }
+
+
+
