@@ -2,28 +2,69 @@ name: PR Terraform Plan
 
 on:
   pull_request:
+    branches:
+      - main
+      - master
 
 permissions:
   contents: read
   pull-requests: write
+  id-token: write
 
 jobs:
   plan:
     runs-on: ubuntu-latest
+
     strategy:
+      fail-fast: false
       matrix:
-        envdir: [environments/aws-prod, environments/azure-prod]
+        include:
+          - env_name: aws-prod
+            envdir: environments/aws-prod
+            cloud: aws
+          - env_name: azure-prod
+            envdir: environments/azure-prod
+            cloud: azure
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      TF_IN_AUTOMATION: "true"
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.7.5
 
-      - name: Terraform fmt
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Terraform fmt check
         run: terraform fmt -check -recursive
+
+      # ---------- AWS AUTH ----------
+      - name: Configure AWS credentials
+        if: matrix.cloud == 'aws'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-1
+
+      # ---------- AZURE AUTH ----------
+      - name: Azure login
+        if: matrix.cloud == 'azure'
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Terraform init
         working-directory: ${{ matrix.envdir }}
@@ -33,46 +74,39 @@ jobs:
         working-directory: ${{ matrix.envdir }}
         run: terraform validate
 
-      # --- Security scanning (pick one first; add the other later) ---
       - name: Run tfsec
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
+          working_directory: ${{ matrix.envdir }}
           soft_fail: true
 
-      # --- Plan ---
       - name: Terraform plan
-        id: plan
         working-directory: ${{ matrix.envdir }}
         env:
-          TF_IN_AUTOMATION: "true"
-          # Cloud creds come from GitHub secrets (see notes below)
+          TF_VAR_ami_id: ${{ secrets.TF_VAR_AMI_ID }}
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+          TF_VAR_db_admin_password: ${{ secrets.TF_VAR_DB_ADMIN_PASSWORD }}
+          TF_VAR_ssh_public_key: ${{ secrets.TF_VAR_SSH_PUBLIC_KEY }}
         run: |
           terraform plan -no-color -out=tfplan
           terraform show -no-color tfplan > plan.txt
 
-      - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: plan-${{ matrix.envdir }}
-          path: |
-            ${{ matrix.envdir }}/plan.txt
-
-      # --- Optional: validate plan output with Python ---
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
       - name: Validate plan policies
         run: python scripts/validate_plan.py "${{ matrix.envdir }}/plan.txt"
 
-      # --- Cost estimation (Infracost example) ---
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ matrix.env_name }}
+          path: |
+            ${{ matrix.envdir }}/plan.txt
+
       - name: Setup Infracost
         uses: infracost/actions/setup@v3
         with:
           api-key: ${{ secrets.INFRACOST_API_KEY }}
 
-      - name: Infracost breakdown
+      - name: Generate cost estimate
         working-directory: ${{ matrix.envdir }}
         run: |
           infracost breakdown --path . --format json --out-file infracost.json
@@ -80,6 +114,6 @@ jobs:
       - name: Upload cost artifact
         uses: actions/upload-artifact@v4
         with:
-          name: cost-${{ matrix.envdir }}
+          name: infracost-${{ matrix.env_name }}
           path: |
             ${{ matrix.envdir }}/infracost.json
