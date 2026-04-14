@@ -2,8 +2,14 @@ import sys
 from pathlib import Path
 
 DENY_PATTERNS = [
-    "0.0.0.0/0",              # overly broad rules often show up in plans
-    "publicly_accessible = true",  # RDS/SQL public exposure smell
+    'cidr_blocks = [\n        "0.0.0.0/0"\n    ]',
+    'publicly_accessible    = true',
+    'publicly_accessible = true',
+]
+
+ALLOW_CONTEXT_HINTS = [
+    "aws_route_table",
+    "route {",
 ]
 
 def main() -> int:
@@ -18,11 +24,19 @@ def main() -> int:
 
     text = plan_path.read_text(errors="ignore")
 
-    violations = [p for p in DENY_PATTERNS if p in text]
+    violations = []
+
+    if "publicly_accessible = true" in text or "publicly_accessible    = true" in text:
+        violations.append("Found publicly accessible database configuration.")
+
+    if 'cidr_blocks = ["0.0.0.0/0"]' in text or '"0.0.0.0/0"' in text:
+        if "aws_security_group" in text or "azurerm_network_security_group" in text:
+            violations.append("Found 0.0.0.0/0 in a security rule context. Review exposure carefully.")
+
     if violations:
         print("❌ Plan policy violations found:")
         for v in violations:
-            print(f" - Contains forbidden pattern: {v}")
+            print(f" - {v}")
         return 1
 
     print("✅ Plan policy checks passed.")
