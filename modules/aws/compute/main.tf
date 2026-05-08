@@ -1,22 +1,22 @@
 //New Config with ALB Implementation
 resource "aws_security_group" "alb" {
-  name = "${var.name}-alb-sg"
+  name        = "${var.name}-alb-sg"
   description = "Security Group for ${var.name} ALB"
-  vpc_id = var.vpc_id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "HTTP"
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
     description = "Allow all outbound traffic"
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -26,31 +26,31 @@ resource "aws_security_group" "alb" {
 }
 
 resource "aws_security_group" "ec2" {
-  name = "${var.name}-ec2-sg"
+  name        = "${var.name}-ec2-sg"
   description = "Security Group for ${var.name} EC2 Instances"
-  vpc_id = var.vpc_id
+  vpc_id      = var.vpc_id
 
   ingress {
-    description = "HTTP from ALB"
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    description     = "HTTP from ALB"
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
     security_groups = [aws_security_group.alb.id]
   }
 
   ingress {
     description = "SSH"
-    from_port = 22
-    to_port = 22 
-    protocol = "tcp"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
     description = "Allow all outbound traffic"
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
@@ -60,11 +60,11 @@ resource "aws_security_group" "ec2" {
 }
 
 resource "aws_lb" "this" {
-  name = "${var.name}-alb"
-  internal = false 
+  name               = "${var.name}-alb"
+  internal           = false
   load_balancer_type = "application"
-  security_groups = [aws_security_group.alb.id]
-  subnets = var.public_subnets
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = var.public_subnets
 
   tags = {
     Name = "${var.name}-alb"
@@ -72,20 +72,20 @@ resource "aws_lb" "this" {
 }
 
 resource "aws_lb_target_group" "this" {
-  name = "${var.name}-tg"
-  port = 80
+  name     = "${var.name}-tg"
+  port     = 80
   protocol = "HTTP"
-  vpc_id = var.vpc_id
+  vpc_id   = var.vpc_id
 
   health_check {
-    enabled = true
-    path = "/"
-    protocol = "HTTP"
-    matcher = "200"
-    healthy_threshold = 2
+    enabled             = true
+    path                = "/"
+    protocol            = "HTTP"
+    matcher             = "200"
+    healthy_threshold   = 2
     unhealthy_threshold = 2
-    interval = 30
-    timeout = 5
+    interval            = 30
+    timeout             = 5
   }
 
   tags = {
@@ -94,19 +94,19 @@ resource "aws_lb_target_group" "this" {
 }
 
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.this.arn 
-  port = 80
-  protocol = "HTTP"
+  load_balancer_arn = aws_lb.this.arn
+  port              = 80
+  protocol          = "HTTP"
 
   default_action {
-    type = "forward"
-    target_group_arn = aws_lb_target_group.this.arn 
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.this.arn
   }
 }
 
 resource "aws_launch_template" "this" {
-  name_prefix = "${var.name}-lt-"
-  image_id = var.ami_id
+  name_prefix   = "${var.name}-lt-"
+  image_id      = var.ami_id
   instance_type = var.instance_type
 
   vpc_security_group_ids = [aws_security_group.ec2.id]
@@ -131,22 +131,22 @@ resource "aws_launch_template" "this" {
 }
 
 resource "aws_autoscaling_group" "this" {
-  name = "${var.name}-asg"
-  desired_capacity = var.desired_capacity
-  min_size = var.min_size
-  max_size = var.max_size
+  name                = "${var.name}-asg"
+  desired_capacity    = var.desired_capacity
+  min_size            = var.min_size
+  max_size            = var.max_size
   vpc_zone_identifier = var.public_subnets
-  target_group_arns = [aws_lb_target_group.this.arn]
-  health_check_type = "ELB"
+  target_group_arns   = [aws_lb_target_group.this.arn]
+  health_check_type   = "ELB"
 
   launch_template {
-    id = aws_launch_template.this.id 
+    id      = aws_launch_template.this.id
     version = "$Latest"
   }
 
   tag {
-    key = "Name"
-    value = "${var.name}-asg-instance"
+    key                 = "Name"
+    value               = "${var.name}-asg-instance"
     propagate_at_launch = true
   }
 }

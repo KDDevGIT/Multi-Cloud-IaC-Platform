@@ -35,8 +35,8 @@ variable "ssh_public_key" {
 }
 
 variable "instance_count" {
-  type = number
+  type        = number
   description = "Initial number of VM instances in the scale set."
-  default = 2
+  default     = 2
 }
 
