@@ -46,14 +46,14 @@ resource "azurerm_public_ip" "lb" {
 }
 
 resource "azurerm_lb" "this" {
-  name = "${var.name}-lb"
-  location = var.location
+  name                = "${var.name}-lb"
+  location            = var.location
   resource_group_name = var.resource_group_name
-  sku = "Standard"
+  sku                 = "Standard"
 
   frontend_ip_configuration {
-    name = "${var.name}-frontend"
-    public_ip_address_id = azurerm_public_ip.lb.id 
+    name                 = "${var.name}-frontend"
+    public_ip_address_id = azurerm_public_ip.lb.id
   }
 
   tags = {
@@ -62,52 +62,52 @@ resource "azurerm_lb" "this" {
 }
 
 resource "azurerm_lb_backend_address_pool" "this" {
-  loadbalancer_id = azurerm_lb.this.id 
-  name = "${var.name}-backend-pool"
+  loadbalancer_id = azurerm_lb.this.id
+  name            = "${var.name}-backend-pool"
 }
 
 resource "azurerm_lb_probe" "http" {
-  loadbalancer_id = azurerm_lb.this.id 
-  name = "${var.name}-http-probe"
-  protocol = "Http"
-  port = 80
-  request_path = "/"
+  loadbalancer_id = azurerm_lb.this.id
+  name            = "${var.name}-http-probe"
+  protocol        = "Http"
+  port            = 80
+  request_path    = "/"
 }
 
 resource "azurerm_lb_rule" "http" {
-  loadbalancer_id = azurerm_lb.this.id 
-  name = "${var.name}-http-rule"
-  protocol = "Tcp"
-  frontend_port = 80
-  backend_port = 80
+  loadbalancer_id                = azurerm_lb.this.id
+  name                           = "${var.name}-http-rule"
+  protocol                       = "Tcp"
+  frontend_port                  = 80
+  backend_port                   = 80
   frontend_ip_configuration_name = "${var.name}-frontend"
-  backend_address_pool_ids = [azurerm_lb_backend_address_pool.this.id]
-  probe_id = azurerm_lb_probe.http.id 
+  backend_address_pool_ids       = [azurerm_lb_backend_address_pool.this.id]
+  probe_id                       = azurerm_lb_probe.http.id
 }
 
 resource "azurerm_linux_virtual_machine_scale_set" "this" {
-  name = "${var.name}-vmss"
-  resource_group_name = var.resource_group_name
-  location = var.location
-  sku = var.vm_size
-  instances = var.instance_count
-  admin_username = var.admin_username
-  disable_password_authentication = true 
+  name                            = "${var.name}-vmss"
+  resource_group_name             = var.resource_group_name
+  location                        = var.location
+  sku                             = var.vm_size
+  instances                       = var.instance_count
+  admin_username                  = var.admin_username
+  disable_password_authentication = true
 
   admin_ssh_key {
-    username = var.admin_username
+    username   = var.admin_username
     public_key = var.ssh_public_key
   }
 
   source_image_reference {
     publisher = "Canonical"
-    offer = "0001-com-ubuntu-server-jammy"
-    sku = "22_04-lts"
-    version = "latest"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts"
+    version   = "latest"
   }
 
   os_disk {
-    caching = "ReadWrite"
+    caching              = "ReadWrite"
     storage_account_type = "Standard_LRS"
   }
 
@@ -125,21 +125,21 @@ resource "azurerm_linux_virtual_machine_scale_set" "this" {
   )
 
   network_interface {
-    name = "${var.name}-vmss-nic"
-    primary = true 
+    name    = "${var.name}-vmss-nic"
+    primary = true
 
     ip_configuration {
-      name = "internal"
-      primary = true 
-      subnet_id = var.subnet_id
-      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.this.id]      
+      name                                   = "internal"
+      primary                                = true
+      subnet_id                              = var.subnet_id
+      load_balancer_backend_address_pool_ids = [azurerm_lb_backend_address_pool.this.id]
     }
     network_security_group_id = azurerm_network_security_group.this.id
   }
 
   tags = {
     Name = "${var.name}-vmss"
-  } 
+  }
 }
 
 

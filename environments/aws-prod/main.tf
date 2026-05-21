@@ -1,20 +1,20 @@
 provider "aws" {
-    region = var.aws_region
+  region = var.aws_region
 }
 
 module "network" {
-    source = "../../modules/aws/network"
-    name = var.name
-    cidr_block = var.vpc_cidr
+  source     = "../../modules/aws/network"
+  name       = var.name
+  cidr_block = var.vpc_cidr
 }
 
 
 module "compute" {
-  source = "../../modules/aws/compute"
-  name = var.name
-  vpc_id = module.network.vpc_id
+  source         = "../../modules/aws/compute"
+  name           = var.name
+  vpc_id         = module.network.vpc_id
   public_subnets = module.network.public_subnet_ids
-  ami_id = var.ami_id
+  ami_id         = var.ami_id
 }
 
 

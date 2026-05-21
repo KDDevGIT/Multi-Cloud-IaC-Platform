@@ -9,20 +9,20 @@ variable "cidr_block" {
 }
 
 variable "public_subnet_cidrs" {
-  type = list(string)
+  type        = list(string)
   description = "CIDR blocks for Public Subnets"
-  default = [ "10.10.1.0/24", "10.10.2.0/24" ]
+  default     = ["10.10.1.0/24", "10.10.2.0/24"]
 }
 
 variable "private_subnet_cidrs" {
-  type = list(string)
+  type        = list(string)
   description = "CIDR blocks for Private Subnets"
-  default = [ "10.10.101.0/24", "10.10.102.0/24" ]
+  default     = ["10.10.101.0/24", "10.10.102.0/24"]
 }
 
 variable "availability_zones" {
-  type = list(string)
+  type        = list(string)
   description = "Availability Zones For Subnets"
-  default = [ "us-west-1a", "us-west-1b" ]
+  default     = ["us-west-1a", "us-west-1b"]
 }
 
