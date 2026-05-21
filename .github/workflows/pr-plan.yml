@@ -66,6 +66,16 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Export Azure credentials for Terraform
+        if: matrix.cloud == 'azure'
+        env:
+          AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        run: |
+          echo "ARM_CLIENT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r .clientId)" >> $GITHUB_ENV
+          echo "ARM_CLIENT_SECRET=$(echo "$AZURE_CREDENTIALS" | jq -r .clientSecret)" >> $GITHUB_ENV
+          echo "ARM_SUBSCRIPTION_ID=$(echo "$AZURE_CREDENTIALS" | jq -r .subscriptionId)" >> $GITHUB_ENV
+          echo "ARM_TENANT_ID=$(echo "$AZURE_CREDENTIALS" | jq -r .tenantId)" >> $GITHUB_ENV
+
       - name: Terraform init
         working-directory: ${{ matrix.envdir }}
         run: terraform init -input=false
@@ -83,10 +93,10 @@ jobs:
       - name: Terraform plan
         working-directory: ${{ matrix.envdir }}
         env:
-          TF_VAR_ami_id: ${{ vars.TF_VAR_AMI_ID }} //AWS
-          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }} //AWS
-          TF_VAR_db_admin_password: ${{ secrets.TF_VAR_DB_ADMIN_PASSWORD }} //AZURE
-          TF_VAR_ssh_public_key: ${{ vars.TF_VAR_SSH_PUBLIC_KEY }} //AZURE
+          TF_VAR_ami_id: ${{ vars.TF_VAR_AMI_ID }}
+          TF_VAR_db_password: ${{ secrets.TF_VAR_DB_PASSWORD }}
+          TF_VAR_db_admin_password: ${{ secrets.TF_VAR_DB_ADMIN_PASSWORD }}
+          TF_VAR_ssh_public_key: ${{ vars.TF_VAR_SSH_PUBLIC_KEY }}
         run: |
           terraform plan -no-color -out=tfplan
           terraform show -no-color tfplan > plan.txt
